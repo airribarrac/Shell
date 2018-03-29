@@ -2,19 +2,18 @@
 #include <unistd.h>
 
 int main(){
-	int tubo[2];
-	pipe(tubo);
-	pid_t p = fork();
-	if(p==0){		//hijo (ls)
-		dup2(tubo[1],1);
-		close(tubo[0]);
-		execlp("ls","ls",NULL);
-	}else if(p>0){	//padre
-		dup2(tubo[0],0);
-		close(tubo[1]);
-		execlp("wc","wc",NULL);
-	}else{
-		perror("Error creando proceso");
+	char buffer[1024];
+	char user[50];
+	size_t usize = 50;
+	char hostname[50];
+	size_t hsize = 50;
+	getlogin_r(user,usize);
+	char *cwd=get_current_dir_name();
+	gethostname(hostname,hsize);
+	printf("%s",cwd);
+	while(1){
+		printf("[%s@%s](UwU)>> ",user,hostname);
+		fgets(buffer,1024,stdin);
 	}
 	return 0;
 }
