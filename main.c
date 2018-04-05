@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+typedef struct{
+	char *name,**arguments;	//comando, arreglo de argumentos
+}command;
+
 int main(){
 	char buffer[1024];
 	char user[50];
