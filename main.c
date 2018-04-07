@@ -79,18 +79,36 @@ int main(){
 				}
 				break;
 			}
-			int pid=fork();
+			pid_t pid=fork();
+			hijos[i]=pid;
 			if(pid==0){									//proceso hijo
 				if(i==0){								//primer comando solo abre salida
 					//solo hago pipe de salida
+					dup2(pipes[i][1],1);				//redirijo su salida
+					close(pipes[i][0]);
+					
 				}else if(i==ncom-1){					//ultimo comando solo abre entrada
-
+					dup2(pipes[i-1][0],0);
+					close(pipes[i-1][1]);
 				}else{
-
+					dup2(pipes[i-1][0],0);
+					dup2(pipes[i][1],1);
+					close(pipes[i-1][1]);
+					close(pipes[i][0]);
 				}
+				for(j=0;j<npipes;j++){					//cierro pipes sin usar
+					if(j==i-1 || j==i) continue;
+					close(pipes[j][0]);
+					close(pipes[j][1]);
+				}
+				if(execvp(comandos[i].args[0],comandos[i].args)<0) perror("Error al ejecutar");
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
 			}
+		}
+		for(i=0;i<npipes;i++){				//padre cierra las pipes
+			close(pipes[i][0]);
+			close(pipes[i][1]);
 		}
 		//espero a los hijos
 		for(int i=0;i<ncom;i++){
