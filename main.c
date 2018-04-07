@@ -37,7 +37,7 @@ int main(){
 		getcwd(cwd,100);
 		printf("[%s@%s %s](OwO)>> ",user,hostname,cwd);
 		fgets(buffer,1024,stdin);
-		if(strcmp(buffer,"exit\narg")==0) exit(0);
+		if(strcmp(buffer,"exit\n")==0) exit(0);
 		cptr=buffer;
 		ctok = strtok_r(buffer,"|\n",&cptr);
 		while(ctok!=NULL){
@@ -82,7 +82,7 @@ int main(){
 			int pid=fork();
 			if(pid==0){									//proceso hijo
 				if(i==0){								//primer comando solo abre salida
-
+					//solo hago pipe de salida
 				}else if(i==ncom-1){					//ultimo comando solo abre entrada
 
 				}else{
