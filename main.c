@@ -30,7 +30,7 @@ int main(){
 	while(1){
 		ncom = 0;					//numero de comando de linea
 		getcwd(cwd,100);
-		printf("[%s@%s %s](OwO)>> ",user,hostname,cwd);
+		printf("[%s@%s %s](OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
 		fgets(buffer,1024,stdin);
 		if(strcmp(buffer,"exit\n")==0) exit(0);
 		cptr=buffer;
