@@ -51,6 +51,37 @@ int main(){
 			ncom++;
 			ctok = strtok_r(NULL,"|\n",&cptr);
 		}
+		int npipes = ncom -1;
+		int pipes[MAXCOM-1][2];
+		for(i=0;i<npipes;i++){
+			pipe(pipes[i]);
+		}
+		
+		for(i=0;i<ncom;i++){
+			if(ncom==1){	//si es solo un comando no uso pipes
+				int pid=fork();
+				if(pid==0){
+					printf("ejecuto %s",comandos[0].args[0]);
+					if(execvp(comandos[0].args[0],comandos[0].args)<0) perror("Error al ejecutar");
+					printf("fdsfsdf\n");
+				}else if(pid<0){
+					perror("Error al crear hijo\n");
+				}
+				break;
+			}
+			int pid=fork();
+			if(pid==0){									//proceso hijo
+				if(i==0){								//primer comando solo abre salida
+
+				}else if(i==ncom-1){					//ultimo comando solo abre entrada
+
+				}else{
+
+				}
+			}else if(pid<0){							//fallo al crear proceso
+				perror("Error creando proceso\n");
+			}
+		}
 		/*
 		for(i=0;i<ncom;i++){
 			printf("comando %d:\n",i);
