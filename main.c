@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAXCOM 10
 #define MAXARG 20
@@ -12,7 +14,8 @@ typedef struct{
 }comando;
 
 int main(){
-	int i,j,k;
+	int i,j,k,status;
+	pid_t hijos[MAXCOM];
 	char buffer[1024];
 	char *ctok,*atok,*cptr,*aptr;
 	char user[50];
@@ -32,22 +35,26 @@ int main(){
 	while(1){
 		ncom = 0;					//numero de comando de linea
 		getcwd(cwd,100);
-		printf("[%s@%s][ %s ](OwO)>> ",user,hostname,cwd);
+		printf("[%s@%s %s](OwO)>> ",user,hostname,cwd);
 		fgets(buffer,1024,stdin);
+		if(strcmp(buffer,"exit\narg")==0) exit(0);
+		cptr=buffer;
 		ctok = strtok_r(buffer,"|\n",&cptr);
 		while(ctok!=NULL){
 			//printf("comando: %s\n",ctok);	//separo argumentos 
 			int narg = 0;
+			aptr=ctok;
 			atok = strtok_r(ctok," ",&aptr);
 			while(atok!=NULL){
 				//printf(" argumento: (%s)\n",atok);
 				//printf("%d\n",narg);
+				comandos[ncom].args[narg]=(char*)malloc(50);	//doy espacio para el comando (debe ser liberado despues!)
 				strcpy(comandos[ncom].args[narg],atok);
-				//printf("chao\n");
 				narg++;
 				atok = strtok_r(NULL," \n\0",&aptr);
 			}
 			comandos[ncom].narg=narg;
+			comandos[ncom].args[narg]=NULL;						//ultimo puntero es NULL
 			ncom++;
 			ctok = strtok_r(NULL,"|\n",&cptr);
 		}
@@ -59,13 +66,16 @@ int main(){
 		
 		for(i=0;i<ncom;i++){
 			if(ncom==1){	//si es solo un comando no uso pipes
-				int pid=fork();
+				pid_t pid=fork();
+
 				if(pid==0){
-					printf("ejecuto %s",comandos[0].args[0]);
+					//printf("ejecuto %s",comandos[0].args[0]);
 					if(execvp(comandos[0].args[0],comandos[0].args)<0) perror("Error al ejecutar");
-					printf("fdsfsdf\n");
+					//printf("fdsfsdf\n");
 				}else if(pid<0){
 					perror("Error al crear hijo\n");
+				}else{
+					hijos[0]=pid;
 				}
 				break;
 			}
@@ -80,6 +90,17 @@ int main(){
 				}
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
+			}
+		}
+		//espero a los hijos
+		for(int i=0;i<ncom;i++){
+			waitpid(hijos[i],&status,WCONTINUED);
+		}
+		//libero memoria pedida
+		for(i=0;i<ncom;i++){
+			int narg = comandos[i].narg;
+			for(j=0;j<narg;j++){
+				free(comandos[i].args[j]);				//libero memoria pedida
 			}
 		}
 		/*
