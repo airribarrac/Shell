@@ -24,11 +24,6 @@ int main(){
 	size_t hsize = 50;
 	getlogin_r(user,usize);
 	comando comandos[MAXCOM];		//almacenar comandos 
-	for(i=0;i<MAXCOM;i++){
-		for(j=0;j<MAXARG;j++){
-			comandos[i].args[j]=(char*)malloc(50);
-		}
-	}
 	int ncom;
 	char cwd[100];
 	gethostname(hostname,hsize);
