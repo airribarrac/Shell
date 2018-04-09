@@ -21,9 +21,9 @@ static void handler(int signum, siginfo_t *info, void * otro){
 		printf("Teclee un comando\n");
 		alarm(5);
 	}else if(signum == SIGCHLD){
+		printf("info:\n %d\n",(int)info->si_pid);
 		int status;
 		if(waitpid(-1, &status, WNOHANG) != -1){
-			printf("info:\n %d\n",(int)info->si_pid);
 			printf("Hijo muerto\n");
 			nhijos++;
 		}
@@ -107,8 +107,7 @@ int main(){
 					//printf("ejecuto %s",comandos[0].args[0]);
 					if(execvp(comandos[0].args[0],comandos[0].args)<0) {
 						perror("Error al ejecutar");
-						error = 1;
-						ncom--;
+						kill(getppid(),SIGCHLD);
 					}
 					//printf("fdsfsdf\n");
 				}else if(pid<0){
@@ -142,7 +141,7 @@ int main(){
 				}
 				if(execvp(comandos[i].args[0],comandos[i].args)<0){ 
 					perror("Error al ejecutar");
-					ncom--;
+					kill(getppid(),SIGCHLD);
 				}
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
