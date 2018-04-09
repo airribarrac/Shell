@@ -8,20 +8,25 @@
 
 #define MAXCOM 10
 #define MAXARG 20
+#define ALARM_TIME 10
 
 typedef struct{
 	char *args[MAXARG];	//maximo 20 argumentos
 	int narg;
 }comando;
-
-
+int active;
+int imprimo;
 static void handler(int signum, siginfo_t *info, void * otro){
 	if(signum == SIGALRM){
-		printf(" Teclee un comando\n");
+		printf("Teclee un comando\n");
+		active=1;
 		//printf("[%s@%s %s](OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
-		alarm(5);
+		alarm(ALARM_TIME);
 	}else if(signum == SIGCHLD){
-		printf("info:\n %d\n",(int)info->si_pid);
+		printf("\n\x1B[31mPROCESO %d:\n",(int)info->si_pid);
+		printf("      retorno = %d\n",(int)info->si_status );
+		printf("    user time = %d\n",(int)info->si_utime );
+		printf("  system time = %d\x1B[0m\n",(int)info->si_stime );
 	}
 }
 
@@ -49,22 +54,32 @@ int main(){
 		perror("Error sigaction\n");
 	}
 	char buffer[1024];
-	alarm(5);
+	alarm(ALARM_TIME);
 
 	while(1){
+		imprimo = 0;
 		ncom = 0;					//numero de comando de linea
+		active = 0;
 		getcwd(cwd,100);
 		printf("[%s@%s %s](OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
-		if(fgets(buffer,1024,stdin)) alarm(10);
-		if(strcmp(buffer,"set on\n")==0){
-			alarm(5);
+		fgets(buffer,1024,stdin);
+		if(active){
+			continue;		//alarma activo stdin
+		}
+		//scanf("%s^\n]",buffer);
+		printf("lei %s\n",buffer );
+		if(buffer[strlen(buffer)-1]=='\n') buffer[strlen(buffer)-1]='\0';
+		if(strcmp(buffer,"set on")==0){
+			alarm(ALARM_TIME);
 			continue;
-		}else if(strcmp(buffer,"set off\n")==0){
+		}else if(strcmp(buffer,"set off")==0){
 			alarm(0);
 			continue;
-		}else if(strcmp(buffer,"exit\n")==0) exit(0);
-		
-		printf("%s\n",buffer);
+		}else if(strcmp(buffer,"exit")==0){ 
+			printf("Adios %s\n",user);
+			exit(0);
+		}
+		//printf("%s\n",buffer);
 		cptr=buffer;
 		ctok = strtok_r(buffer,"|\n",&cptr);
 		
@@ -99,7 +114,10 @@ int main(){
 
 				if(pid==0){
 					//printf("ejecuto %s",comandos[0].args[0]);
-					if(execvp(comandos[0].args[0],comandos[0].args)<0) perror("Error al ejecutar");
+					if(execvp(comandos[0].args[0],comandos[0].args)<0){
+						perror("Error al ejecutar");
+						printf("En comando %s\n",comandos[i].args[0] );
+					}
 					exit(-1);
 					//printf("fdsfsdf\n");
 				}else if(pid<0){
@@ -131,7 +149,10 @@ int main(){
 					close(pipes[j][0]);
 					close(pipes[j][1]);
 				}
-				if(execvp(comandos[i].args[0],comandos[i].args)<0) perror("Error al ejecutar");
+				if(execvp(comandos[i].args[0],comandos[i].args)<0){
+					perror("Error al ejecutar");
+					printf("En comando %s\n",comandos[i].args[0] );
+				}
 				exit(-1);
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
@@ -145,6 +166,8 @@ int main(){
 		for(int i=0;i<ncom;i++){
 			waitpid(hijos[i],&status,WCONTINUED);
 		}
+
+		imprimo=0;
 		//libero memoria pedida
 		for(i=0;i<ncom;i++){
 			int narg = comandos[i].narg;

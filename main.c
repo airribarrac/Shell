@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define MAXCOM 10
+#define MAXCOM 50
 #define MAXARG 20
 
 typedef struct{
