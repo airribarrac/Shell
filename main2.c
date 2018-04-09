@@ -77,6 +77,7 @@ int main(){
 				//printf(" argumento: (%s)\n",atok);
 				//printf("%d\n",narg);
 				comandos[ncom].args[narg]=(char*)malloc(50);	//doy espacio para el comando (debe ser liberado despues!)
+				if(comandos[ncom].args[narg]==NULL) perror("Error asignando memoria");
 				strcpy(comandos[ncom].args[narg],atok);
 				narg++;
 				atok = strtok_r(NULL," \n\0",&aptr);
@@ -99,6 +100,7 @@ int main(){
 				if(pid==0){
 					//printf("ejecuto %s",comandos[0].args[0]);
 					if(execvp(comandos[0].args[0],comandos[0].args)<0) perror("Error al ejecutar");
+					exit(-1);
 					//printf("fdsfsdf\n");
 				}else if(pid<0){
 					perror("Error al crear hijo\n");
@@ -130,6 +132,7 @@ int main(){
 					close(pipes[j][1]);
 				}
 				if(execvp(comandos[i].args[0],comandos[i].args)<0) perror("Error al ejecutar");
+				exit(-1);
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
 			}

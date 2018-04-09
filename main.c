@@ -13,7 +13,7 @@ typedef struct{
 	int narg;
 }comando;
 
-int main(){
+int main(int argc , char *argv[]){
 	int i,j,k,status;
 	pid_t hijos[MAXCOM];
 	char buffer[1024];
@@ -30,11 +30,16 @@ int main(){
 	while(1){
 		ncom = 0;					//numero de comando de linea
 		getcwd(cwd,100);
-		printf("[%s@%s %s](OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
+		printf("[%s@%s %s] (OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
 		fgets(buffer,1024,stdin);
-		if(strcmp(buffer,"exit\n")==0) exit(0);
+		if(buffer[strlen(buffer)-1]=='\n') buffer[strlen(buffer)-1]='\0';
+		if(strcmp(buffer,"exit")==0){
+			printf("Adios %s!\n",user);
+			exit(0);
+		}
+
 		cptr=buffer;
-		ctok = strtok_r(buffer,"|\n",&cptr);
+		ctok = strtok_r(buffer,"|",&cptr);
 		while(ctok!=NULL){
 			//printf("comando: %s\n",ctok);	//separo argumentos 
 			int narg = 0;
@@ -44,9 +49,9 @@ int main(){
 				//printf(" argumento: (%s)\n",atok);
 				//printf("%d\n",narg);
 				comandos[ncom].args[narg]=(char*)malloc(50);	//doy espacio para el comando (debe ser liberado despues!)
-				strcpy(comandos[ncom].args[narg],atok);
+				strcpy(comandos[ncom].args[narg],atok);			//50 chars debería ser mas que suficiente por argumento
 				narg++;
-				atok = strtok_r(NULL," \n\0",&aptr);
+				atok = strtok_r(NULL," \0",&aptr);
 			}
 			comandos[ncom].narg=narg;
 			comandos[ncom].args[narg]=NULL;						//ultimo puntero es NULL
@@ -61,11 +66,20 @@ int main(){
 		
 		for(i=0;i<ncom;i++){
 			if(ncom==1){	//si es solo un comando no uso pipes
+
+				if(strcmp("cd",comandos[0].args[0])==0){
+					if(chdir(comandos[0].args[1])<0){
+						perror("Error al cambiar de directorio");
+					}
+					break;
+				}
+
 				pid_t pid=fork();
 
 				if(pid==0){
 					//printf("ejecuto %s",comandos[0].args[0]);
 					if(execvp(comandos[0].args[0],comandos[0].args)<0) perror("Error al ejecutar");
+					exit(-1);
 					//printf("fdsfsdf\n");
 				}else if(pid<0){
 					perror("Error al crear hijo\n");
@@ -97,6 +111,7 @@ int main(){
 					close(pipes[j][1]);
 				}
 				if(execvp(comandos[i].args[0],comandos[i].args)<0) perror("Error al ejecutar");
+				exit(-1);
 			}else if(pid<0){							//fallo al crear proceso
 				perror("Error creando proceso\n");
 			}
