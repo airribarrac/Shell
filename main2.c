@@ -18,7 +18,7 @@ int active;
 int imprimo;
 static void handler(int signum, siginfo_t *info, void * otro){
 	if(signum == SIGALRM){
-		printf("Teclee un comando\n");
+		printf("\x1B[36mTeclee un comando\x1B[0m\n");
 		active=1;
 		//printf("[%s@%s %s](OwO)>> ",user,hostname,strrchr(cwd,'/')+1);	// strrchr da posicion de ultima ocurrencia del caracter
 		alarm(ALARM_TIME);
@@ -67,7 +67,7 @@ int main(){
 			continue;		//alarma activo stdin
 		}
 		//scanf("%s^\n]",buffer);
-		printf("lei %s\n",buffer );
+		//printf("lei %s\n",buffer );
 		if(buffer[strlen(buffer)-1]=='\n') buffer[strlen(buffer)-1]='\0';
 		if(strcmp(buffer,"set on")==0){
 			alarm(ALARM_TIME);
@@ -91,7 +91,8 @@ int main(){
 			while(atok!=NULL){
 				//printf(" argumento: (%s)\n",atok);
 				//printf("%d\n",narg);
-				comandos[ncom].args[narg]=(char*)malloc(50);	//doy espacio para el comando (debe ser liberado despues!)
+				if(atok[0]=='\"') puts("comienza en comilla");	
+				comandos[ncom].args[narg]=(char*)malloc(50);	//doy espacio para el argumento (debe ser liberado despues!)
 				if(comandos[ncom].args[narg]==NULL) perror("Error asignando memoria");
 				strcpy(comandos[ncom].args[narg],atok);
 				narg++;
@@ -110,6 +111,13 @@ int main(){
 		
 		for(i=0;i<ncom;i++){
 			if(ncom==1){	//si es solo un comando no uso pipes
+				if(strcmp("cd",comandos[0].args[0])==0){
+					if(chdir(comandos[0].args[1])<0){
+						perror("Error al cambiar de directorio");
+					}
+					break;
+				}
+
 				pid_t pid=fork();
 
 				if(pid==0){
